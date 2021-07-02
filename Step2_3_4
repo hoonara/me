@@ -1,0 +1,120 @@
+#!/bin/bash
+
+#GO_VERSION=go1.12.5
+#COSMOS_VERSION=v0.35.0
+
+run () {
+   
+    echo "Enable IPv6 support for Docker"
+    echo ""
+    echo '{
+    "ipv6": true,
+    "fixed-cidr-v6": "2001:db8:1::/64"
+}' | sudo tee -a /etc/docker/daemon.json
+
+    echo ""
+    echo "Restart the Docker process"
+    echo ""
+    sudo systemctl restart docker
+    
+    echo ""
+    echo "Install iptables-persistent package"
+    echo ""
+    sudo apt-get install --yes iptables-persistent
+    
+    echo ""
+    echo "Enable NAT for the private Docker subnet on the host" 
+    echo ""
+    rule="POSTROUTING -s 2001:db8:1::/64 ! -o docker0 -j MASQUERADE" && \
+sudo ip6tables -t nat -C ${rule} || \
+sudo ip6tables -t nat -A ${rule} && \
+sudo sh -c "ip6tables-save > /etc/iptables/rules.v6"
+    
+    echo ""
+    echo "Install Git package" 
+    echo ""
+    sudo apt-get install --yes git
+    
+    echo ""
+    echo "Clone the GitHub repository"
+    echo ""
+    git clone https://github.com/sentinel-official/dvpn-node.git \
+    ${HOME}/dvpn-node/
+    
+    echo ""
+    echo "Change the working directory and checkout to the latest tag"
+    echo ""
+    cd ${HOME}/dvpn-node/ && \
+commit=$(git rev-list --tags --max-count=1) && \
+git checkout $(git describe --tags ${commit})
+    
+    echo ""
+    echo "Build the image"
+    echo ""
+    docker build --file Dockerfile \
+    --tag sentinel-dvpn-node \
+    --force-rm \
+    --no-cache \
+    --compress .
+    
+    echo ""
+    echo "Install openssl package"
+    echo ""
+    sudo apt-get install --yes openssl
+    
+    echo ""
+    echo "Create a certificate"
+    echo "YOU WILL NEED TO ENTER VALUES"
+    echo ""
+    Sleep 5s
+    openssl req -new \
+    -newkey ec \
+    -pkeyopt ec_paramgen_curve:prime256v1 \
+    -x509 \
+    -sha256 \
+    -days 365 \
+    -nodes \
+    -out ${HOME}/tls.crt \
+    -keyout ${HOME}/tls.key
+    
+    
+    #export GOPATH=$HOME/go
+    #export GOBIN=$GOPATH/bin
+    #export PATH=$PATH:$GOBIN:/usr/local/go/bin
+
+    #echo "Installing cosmos-sdk"
+
+    #mkdir -p $GOPATH/src/github.com/cosmos
+    #cd $GOPATH/src/github.com/cosmos
+    #git clone https://github.com/cosmos/cosmos-sdk
+    #cd cosmos-sdk && git checkout $COSMOS_VERSION
+    #make tools install
+
+    #gaiad version --long
+    #gaiacli version --long
+
+    #gaiacli config node mcv-sentry-1.mycosmosvalidator.com:26657
+    #gaiacli config trust-node true
+    #gaiacli config chain-id cosmoshub-2
+
+
+    #echo "Gaiacli and Gaiad successfully installed"
+    #echo ""
+    #echo ""
+    #echo "NOTE PLEASE RUN"
+    #echo ""
+    #echo "source ~/.bashrc"
+    #echo ""
+    #echo "to refresh your paths"
+    #echo ""
+    #echo ""
+    #echo "For more information and help on how to use gaiacli to send transactions and delegate, please visit https://mycosmosvalidator.com"
+    #echo ""
+    #echo "Try running gaiacli status to see the current status of the cosmos network"
+    #echo ""
+
+
+
+}
+
+run
