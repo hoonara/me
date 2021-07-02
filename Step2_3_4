@@ -63,7 +63,28 @@ git checkout $(git describe --tags ${commit})
     sudo apt-get install --yes openssl
     
    
+    echo ""
+    echo "Initialize the application configuration"
+    echo ""
+    docker run --rm \
+    --volume ${HOME}/.sentinelnode:/root/.sentinelnode \
+    sentinel-dvpn-node process config init
    
+   
+    echo ""
+    echo "Initialize the application configuration"
+    echo ""
+    docker run --rm \
+    --volume ${HOME}/.sentinelnode:/root/.sentinelnode \
+    sentinel-dvpn-node process wireguard config init
+    
+    
+    echo ""
+    echo "Move created TLS keys"
+    echo ""
+    mv ${HOME}/tls.crt ${HOME}/.sentinelnode/tls.crt
+    mv ${HOME}/tls.key ${HOME}/.sentinelnode/tls.key
+    
     
     
     #export GOPATH=$HOME/go
