@@ -62,20 +62,8 @@ git checkout $(git describe --tags ${commit})
     echo ""
     sudo apt-get install --yes openssl
     
-    echo ""
-    echo "Create a certificate"
-    echo "YOU WILL NEED TO ENTER VALUES"
-    echo ""
-    Sleep 5s
-    openssl req -new \
-    -newkey ec \
-    -pkeyopt ec_paramgen_curve:prime256v1 \
-    -x509 \
-    -sha256 \
-    -days 365 \
-    -nodes \
-    -out ${HOME}/tls.crt \
-    -keyout ${HOME}/tls.key
+   
+   
     
     
     #export GOPATH=$HOME/go
